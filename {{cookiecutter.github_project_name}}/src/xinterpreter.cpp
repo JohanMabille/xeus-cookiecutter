@@ -101,7 +101,6 @@ namespace {{cookiecutter.cpp_namespace}}
         // No completion result
         else
         {
-
             return xeus::create_complete_reply(
                 nl::json::array(),  /*matches*/
                 cursor_pos,         /*cursor_start*/
@@ -122,34 +121,36 @@ namespace {{cookiecutter.cpp_namespace}}
         {% endraw %} 
     }
 
-    void interpreter::shutdown_request_impl() {
-        std::cout << "Bye!!" << std::endl;
+    nl::json interpreter::shutdown_request_impl(bool /*restart*/)
+    {
+        return xeus::create_shutdown_reply(false);
+    }
+
+    nl::json interpreter::interrupt_request_impl()
+    {
+        return xeus::create_interrupt_reply();
     }
 
     nl::json interpreter::kernel_info_request_impl()
     {
 
-        const std::string  protocol_version = "5.3";
-        const std::string  implementation = "{{cookiecutter.kernel_name}}";
-        const std::string  implementation_version = {{cookiecutter.cpp_macro_prefix}}_VERSION;
-        const std::string  language_name = "{{cookiecutter.language}}";
-        const std::string  language_version = "{{cookiecutter.language_version}}";
-        const std::string  language_mimetype = "{{cookiecutter.language_mimetype}}";;
-        const std::string  language_file_extension = "{{cookiecutter.language_file_extension}}";;
-        const std::string  language_pygments_lexer = "";
-        const std::string  language_codemirror_mode = "";
-        const std::string  language_nbconvert_exporter = "";
-        const std::string  banner = "{{cookiecutter.kernel_name}}";
+        const std::string implementation = "{{cookiecutter.kernel_name}}";
+        const std::string implementation_version = {{cookiecutter.cpp_macro_prefix}}_VERSION;
+        const std::string language_name = "{{cookiecutter.language}}";
+        const std::string language_version = "{{cookiecutter.language_version}}";
+        const std::string language_mimetype = "{{cookiecutter.language_mimetype}}";;
+        const std::string language_file_extension = "{{cookiecutter.language_file_extension}}";;
+        const std::string language_pygments_lexer = "";
+        const std::string language_codemirror_mode = "";
+        const std::string language_nbconvert_exporter = "";
+        const std::string banner = "{{cookiecutter.kernel_name}}";
+        const nl::json    help_links = nl::json::array();
+
+        std::vector<std::string> supported_features = {};
         {%- if cookiecutter.with_debugger == "yes" -%}
-        const bool         debugger = true;
-        {%- elif cookiecutter.with_debugger == "no" -%}
-        const bool         debugger = false;
+        supported_features.push_back("debugger");
         {% endif %}
-        const nl::json     help_links = nl::json::array();
-
-
         return xeus::create_info_reply(
-            protocol_version,
             implementation,
             implementation_version,
             language_name,
@@ -160,8 +161,8 @@ namespace {{cookiecutter.cpp_namespace}}
             language_codemirror_mode,
             language_nbconvert_exporter,
             banner,
-            debugger,
-            help_links
+            help_links,
+            supported_features
         );
     }
 

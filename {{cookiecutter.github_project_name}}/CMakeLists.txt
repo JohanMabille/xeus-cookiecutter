@@ -6,7 +6,7 @@
 #The full license is in the file LICENSE, distributed with this software.
 #############################################################################
 
-cmake_minimum_required(VERSION 3.10.0)
+cmake_minimum_required(VERSION 3.24.0)
 project({{cookiecutter.project_name}})
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 
@@ -50,11 +50,11 @@ OPTION({{cookiecutter.cmake_var_prefix}}_BUILD_EXECUTABLE "Build the {{cookiecut
 OPTION({{cookiecutter.cmake_var_prefix}}_USE_SHARED_XEUS "Link {{cookiecutter.binary_name}}  with the xeus shared library (instead of the static library)" ON)
 OPTION({{cookiecutter.cmake_var_prefix}}_USE_SHARED_{{cookiecutter.cmake_var_prefix}} "Link {{cookiecutter.binary_name}}  with the xeus shared library (instead of the static library)" ON)
 
-
 {% if cookiecutter.with_wasm == "yes" -%}
 if(EMSCRIPTEN)
     add_compile_definitions({{cookiecutter.cpp_macro_prefix}}_EMSCRIPTEN_WASM_BUILD)
     message("Build with emscripten")
+    set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
     SET({{cookiecutter.cmake_var_prefix}}_BUILD_STATIC ON)
     SET({{cookiecutter.cmake_var_prefix}}_BUILD_SHARED OFF)
     SET({{cookiecutter.cmake_var_prefix}}_BUILD_EXECUTABLE OFF)
@@ -67,41 +67,22 @@ endif()
 # Dependencies
 # ============
 
-
-set(xeus_REQUIRED_VERSION 5.0.0)
-
-find_package(xeus ${xeus_REQUIRED_VERSION} REQUIRED)
-
-# Flags
-# =====
-include(CheckCXXCompilerFlag)
-
-if (MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251 /wd4141")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4018 /wd4267 /wd4715 /wd4146 /wd4129")
-endif ()
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-    {% if cookiecutter.with_wasm == "yes" -%}
-    if(NOT EMSCRIPTEN)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wunused-parameter -Wextra -Wreorder")
-    endif()
-    {% else -%}
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wunused-parameter -Wextra -Wreorder")
-    {% endif %}
-
-    CHECK_CXX_COMPILER_FLAG("-std=c++{{cookiecutter.cpp_standard}}" HAS_CPP_{{cookiecutter.cpp_standard}}_FLAG)
-    if (HAS_CPP_{{cookiecutter.cpp_standard}}_FLAG)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++{{cookiecutter.cpp_standard}}")
-    else ()
-        message(FATAL_ERROR "Unsupported compiler -- xeus requires C++{{cookiecutter.cpp_standard}} support!")
-    endif ()
-endif ()
+set(xeus_zmq_REQUIRED_VERSION 4.0.0)
 
 {% if cookiecutter.with_wasm == "yes" -%}
-if(EMSCRIPTEN)
-    # ENV (https://github.com/emscripten-core/emscripten/commit/6d9681ad04f60b41ef6345ab06c29bbc9eeb84e0)
-    set(EMSCRIPTEN_FEATURES "${EMSCRIPTEN_FEATURES} -s \"EXTRA_EXPORTED_RUNTIME_METHODS=[ENV']\"")
+set(xeus_lite_REQUIRED_VERSION 5.0.0)
+if (EMSCRIPTEN)
+    if (NOT TARGET xeus-lite)
+        find_package(xeus-lite ${xeus_lite_REQUIRED_VERSION} REQUIRED)
+    endif()
+else()
+    if (NOT TARGET xeus-zmq AND NOT TARGET xeus-zmq-static)
+        find_package(xeus-zmq ${xeus_zmq_REQUIRED_VERSION} REQUIRED)
+    endif()
+endif()
+{% else %}
+if (NOT TARGET xeus-zmq AND NOT TARGET xeus-zmq-static)
+    find_package(xeus-zmq ${xeus_zmq_REQUIRED_VERSION} REQUIRED)
 endif()
 {% endif %}
 
@@ -121,6 +102,11 @@ set({{cookiecutter.cmake_var_prefix}}_MAIN_SRC
     src/main.cpp
 )
 
+{% if cookiecutter.with_wasm == "yes" -%}
+set({{cookiecutter.cmake_var_prefix}}_MAIN_WASM_SRC
+    src/main_emscripten_kernel.cpp
+)
+{% endif %}
 
 # Targets and link - Macros
 # =========================
