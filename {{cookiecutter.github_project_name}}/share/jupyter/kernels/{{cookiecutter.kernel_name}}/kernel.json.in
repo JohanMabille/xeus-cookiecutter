@@ -6,6 +6,7 @@
       "{connection_file}"
   ],
   "language": "{{cookiecutter.language}}",
+  "kernel_protocol_version": "5.6.0",
   "metadata": { 
 
   {%- if cookiecutter.with_debugger == "no" -%}

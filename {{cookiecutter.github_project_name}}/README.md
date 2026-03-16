@@ -39,7 +39,7 @@ mamba install`{{cookiecutter.conda_package_name}}` notebook -c conda-forge
 Or you can install it from the sources, you will first need to install dependencies
 
 ```bash
-mamba install cmake cxx-compiler xeus-zmq nlohmann_json cppzmq xtl jupyterlab -c conda-forge
+mamba install cmake cxx-compiler xeus-zmq nlohmann_json cppzmq jupyterlab -c conda-forge
 ```
 
 Then you can compile the sources (replace `$CONDA_PREFIX` with a custom installation
@@ -72,7 +72,6 @@ http://{{cookiecutter.readthedocs_package_name}}.readthedocs.io
 `{{cookiecutter.package_name}}` depends on
 
 - [xeus-zmq](https://github.com/jupyter-xeus/xeus-zmq)
-- [xtl](https://github.com/xtensor-stack/xtl)
 - [nlohmann_json](https://github.com/nlohmann/json)
 - [cppzmq](https://github.com/zeromq/cppzmq)
 
